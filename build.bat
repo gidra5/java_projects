@@ -1,0 +1,1 @@
+javac ./%1/main.java -d ./%1/build
