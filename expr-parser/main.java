@@ -3,10 +3,10 @@ import java.util.regex.*;
 
 /*
     Syntax definition:
-    decl = ident = expr
-    expr = summand ([+-] expr)?
-    operand = multiplier ([/^*] summand)?
-    multiplier = number | ident | (expr)
+    decl := ident = expr
+    expr := summand ([+-] expr)?
+    summand := multiplier ([/^*'] summand)?
+    multiplier := number | ident | (expr)
 
     enter expression to evaluate it or i to enter interactive mode
 */
@@ -114,7 +114,7 @@ class Multiplier {
         else if (ident != null) {
             if (variables.get(ident.val) != null) 
                 return variables.get(ident.val).evaluate(variables);
-            else throw new FailedToParseException("No declared identifier " + ident.val);
+            else throw new FailedToParseException("No declared variable " + ident.val);
         }
         else return val;
     }
@@ -257,6 +257,7 @@ class Main {
                 HashMap<String, Expr> variables = new HashMap<String, Expr>();
 
                 while (true) {
+                    System.out.println("> ");
                     String next_line = scanner.nextLine().replace(" ", "");
 
                     if (next_line.equals("q")) break;
@@ -268,20 +269,21 @@ class Main {
                         variables.put(d.ident.val, d.expr);
 
                         for (String ident : variables.keySet()) {
+                            System.out.println(ident + " = ");
+
                             try {
-                                System.out.print(ident + " = " + variables.get(ident).evaluate(variables) + " ");
+                                System.out.print(variables.get(ident).evaluate(variables) + " ");
                             } catch (FailedToParseException e2) {
                                 System.out.print(e2.getMessage());
                             }
                         }
-                        System.out.println();
                     } catch (FailedToParseException e) {
                         CharIterator expr = new CharIterator(next_line);
                         
                         try {
                             System.out.print(new Expr(expr).evaluate(variables));
                         } catch (FailedToParseException e2) {
-                            System.out.println(e2.getMessage());
+                            System.out.print(e2.getMessage());
                         }
                     }
                 }
