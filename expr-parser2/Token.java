@@ -1,6 +1,6 @@
 package expr-parser2;
 
-public sealed interface Token implements AbstractSyntaxTree
+public sealed interface Token extends AbstractSyntaxTree
   permits Operator, Literal, Identifier, Keyword, Punct, EOL, EOT
 {
   public Token tokenize(CharIterator it) throws FailedToTokenizeException;
@@ -10,11 +10,11 @@ public sealed interface Token implements AbstractSyntaxTree
 }
 
 class FailedToTokenizeException extends Exception {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    FailedToTokenizeException(String errmsg) {
-        super(errmsg);
-    }
+  FailedToTokenizeException(String errmsg) {
+      super(errmsg);
+  }
 }
 
 public record Identifier(String val) implements Token {
