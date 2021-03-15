@@ -1,5 +1,8 @@
-package expr-parser2;
-import expr-parser2.tokens.*;
+package expr_parser2;
+
+import expr_parser2.tokens.*;
+import expr_parser2.*;
+import java.util.*;
 
 /*
   Syntax definition:
@@ -67,13 +70,13 @@ public class Main {
     }
   }
 
-  public void saveVariable(Decl decl) {
+  public static void saveVariable(Decl decl) {
     var ident = decl.children.get(0);
     var expr = decl.children.get(1);
     variables.put(ident, expr);
   }
 
-  public void printVariables() {
+  public static void printVariables() {
     System.out.println();
 
     for (Identificator ident : variables.keySet()) 

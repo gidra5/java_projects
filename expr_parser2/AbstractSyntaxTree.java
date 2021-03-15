@@ -1,9 +1,9 @@
-package expr-parser2;
+package expr_parser2;
 
 import java.util.ArrayList;
-import expr-parser2.*;
+import expr_parser2.*;
 
-public sealed abstract class AbstractSyntaxTree
+public sealed class AbstractSyntaxTree
   permits Token, Expr, Product, Multiplier, Decl, CmdExpr
 {
   public ArrayList<AbstractSyntaxTree> children = new ArrayList<>();
