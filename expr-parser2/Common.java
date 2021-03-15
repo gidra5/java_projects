@@ -1,4 +1,5 @@
 package expr-parser2;
+import expr-parser2.*;
 
 import java.util.*;
 
@@ -99,4 +100,11 @@ class TokenIterator implements Iterator<Token>, Cloneable {
   public Object clone() {
     return super.clone();
   }
+}
+
+class Evaluator {
+  static double evaluate(AbstractSyntaxTree ast) {
+
+    return 0.;
+  } 
 }

@@ -2,20 +2,20 @@ package expr-parser2.tokens;
 
 import expr-parser2.Token;
 
-public sealed interface Punct extends Token
+public sealed abstract class Punct extends Token
   permits Bracket, Brace, Parenthesis, AngleBracket, Comma, Period, Semicolon, Colon
 { }
 
-public sealed interface Parenthesis extends Punct
+public sealed abstract class Parenthesis extends Punct
   permits Parenthesis.Left, Parenthesis.Right
 {
-  public final class Left implements Parenthesis {
+  public final class Left extends Parenthesis {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '(') { it.next(); return new Left(); }
       else throw new FailedToTokenizeException("Expected opening parenthesis");
     }
   }
-  public final class Right implements Parenthesis {
+  public final class Right extends Parenthesis {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == ')') { it.next(); return new Right(); }
       else throw new FailedToTokenizeException("Expected closing parenthesis");
@@ -24,16 +24,16 @@ public sealed interface Parenthesis extends Punct
 }
 
 
-public sealed interface Brace extends Punct
+public sealed abstract class Brace extends Punct
   permits Brace.Left, Brace.Right
 {
-  public final class Left implements Brace {
+  public final class Left extends Brace {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '[') { it.next(); return new Left(); }
       else throw new FailedToTokenizeException("Expected opening parenthesis");
     }
   }
-  public final class Right implements Brace {
+  public final class Right extends Brace {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == ']') { it.next(); return new Right(); }
       else throw new FailedToTokenizeException("Expected closing parenthesis");
@@ -41,16 +41,16 @@ public sealed interface Brace extends Punct
   }
 }
 
-public sealed interface Bracket extends Punct
+public sealed abstract class Bracket extends Punct
   permits Bracket.Left, Bracket.Right
 {
-  public final class Left implements Bracket {
+  public final class Left extends Bracket {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '{') { it.next(); return new Left(); }
       else throw new FailedToTokenizeException("Expected opening parenthesis");
     }
   }
-  public final class Right implements Bracket {
+  public final class Right extends Bracket {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '}') { it.next(); return new Right(); }
       else throw new FailedToTokenizeException("Expected closing parenthesis");
@@ -58,16 +58,16 @@ public sealed interface Bracket extends Punct
   }
 }
 
-public sealed interface AngleBracket extends Punct
+public sealed abstract class AngleBracket extends Punct
   permits AngleBracket.Left, AngleBracket.Right
 {
-  public final class Left implements AngleBracket {
+  public final class Left extends AngleBracket {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '<') { it.next(); return new Left(); }
       else throw new FailedToTokenizeException("Expected opening parenthesis");
     }
   }
-  public final class Right implements AngleBracket {
+  public final class Right extends AngleBracket {
     public Token tokenize(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '>') { it.next(); return new Right(); }
       else throw new FailedToTokenizeException("Expected closing parenthesis");
