@@ -1,7 +1,10 @@
 package tokens;
 
-import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.*;
+
 import common.*;
+import main.Main;
 
 public sealed class AbstractSyntaxTree
   permits Token, AbstractSyntaxTree.Expr, AbstractSyntaxTree.Product, AbstractSyntaxTree.Multiplier, AbstractSyntaxTree.Decl, AbstractSyntaxTree.CmdExpr
@@ -10,6 +13,18 @@ public sealed class AbstractSyntaxTree
 
   public static final class CmdExpr extends AbstractSyntaxTree {
     public CmdExpr(TokenIterator it) throws FailedToParseException {
+      // if (it.peek() instanceof Keyword.Quit) children.add(it.next());
+      // else {
+      //   var list = new ArrayList<Callable<AbstractSyntaxTree>>();
+    
+      //   list.add(() -> { new Decl((TokenIterator)it.clone()); return new Decl(it); });
+      //   list.add(() -> { new Expr((TokenIterator)it.clone()); return new Expr(it); });
+    
+      //   try {
+      //     children.add(Main.executorService.invokeAny(list));
+      //   } catch (InterruptedException | ExecutionException e) { throw (FailedToParseException)e.getCause(); }
+      // }
+
       if (it.peek() instanceof Keyword.Quit) children.add(it.next());
       else {
         try {
@@ -60,8 +75,6 @@ public sealed class AbstractSyntaxTree
 
   public static final class Multiplier extends AbstractSyntaxTree {
     public Multiplier(TokenIterator it) throws FailedToParseException {
-      // System.out.println(it.peek().getClass().getName());
-
       if (it.peek() instanceof Token.Identifier || it.peek() instanceof Literal.Num) {
         children.add(it.next());
       } else if (it.peek() instanceof Punct.Parenthesis.Left) {
@@ -69,12 +82,12 @@ public sealed class AbstractSyntaxTree
   
         var ast = new Expr(it);
   
-        if (!(it.next() instanceof Punct.Parenthesis.Right))
-          throw new FailedToParseException("missing closing parenthesis");
-        else 
+        if (it.next() instanceof Punct.Parenthesis.Right)
           children.add(ast); 
+        else 
+          throw new FailedToParseException("missing closing parenthesis");
       } else 
-        throw new FailedToParseException("Unexpected token");
+        throw new FailedToParseException("Unexpected token " + it.peek().getClass().getName());
     }
   }
 
@@ -96,6 +109,10 @@ public sealed class AbstractSyntaxTree
 
 class FailedToParseException extends Exception {
   private static final long serialVersionUID = 1L;
+
+  FailedToParseException() {
+    super();
+  }
 
   FailedToParseException(String errmsg) {
       super(errmsg);

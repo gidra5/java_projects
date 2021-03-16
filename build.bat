@@ -1,1 +1,1 @@
-javac ./%1/src/Main.java -d ./%1/build --enable-preview --release 15 -cp ./%1/src
+javac ./%1/src/main/Main.java -d ./%1/build --enable-preview --release 15 -cp ./%1/src

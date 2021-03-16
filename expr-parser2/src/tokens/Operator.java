@@ -1,54 +1,29 @@
 package tokens;
 
 import common.*;
+import java.util.concurrent.*;
+import java.util.*;
+import main.Main;
 
 public sealed class Operator extends Token
   permits Operator.Sub, Operator.Add, Operator.Mult, Operator.Div, Operator.Pow, Operator.Mod, Operator.Equal
 { 
   Operator() {}
 
-  // todo fix nesting hell somehow
-
   public Operator(CharIterator it) throws FailedToTokenizeException {
+    var list = new ArrayList<Callable<AbstractSyntaxTree>>();
+
+    list.add(() -> { new Sub((CharIterator)it.clone()); return new Sub(it); });
+    list.add(() -> { new Add((CharIterator)it.clone()); return new Add(it); });
+    list.add(() -> { new Mult((CharIterator)it.clone()); return new Mult(it); });
+    list.add(() -> { new Div((CharIterator)it.clone()); return new Div(it); });
+    list.add(() -> { new Pow((CharIterator)it.clone()); return new Pow(it); });
+    list.add(() -> { new Mod((CharIterator)it.clone()); return new Mod(it); });
+    list.add(() -> { new Equal((CharIterator)it.clone()); return new Equal(it); });
+
     try {
-      new Sub((CharIterator)it.clone()); 
-
-      children.add(new Sub(it));
-    } catch (Exception e) {
-      try {
-        new Add((CharIterator)it.clone()); 
-
-        children.add(new Add(it));
-      } catch (Exception e2) {
-        try {
-          new Mult((CharIterator)it.clone()); 
-
-          children.add(new Mult(it));
-        } catch (Exception e3) {
-          try {
-            new Div((CharIterator)it.clone()); 
-
-            children.add(new Div(it));
-          } catch (Exception e4) {
-            try {
-              new Pow((CharIterator)it.clone()); 
-
-              children.add(new Pow(it));
-            } catch (Exception e5) {
-              try {
-                new Mod((CharIterator)it.clone()); 
-
-                children.add(new Mod(it));
-              } catch (Exception e6) {
-                new Equal((CharIterator)it.clone()); 
-
-                children.add(new Equal(it));
-              }
-            }
-          }
-        }
-      }
-    }
+      children.add(Main.executorService.invokeAny(list));
+    } catch (InterruptedException | ExecutionException e) { throw new FailedToTokenizeException(); }
   }
   
   public static final class Sub extends Operator {

@@ -2,6 +2,9 @@ package tokens;
 
 import common.*;
 import java.util.regex.*;
+// import java.util.*;
+// import java.util.concurrent.*;
+// import main.Main;
 
 public sealed class Token extends AbstractSyntaxTree
   permits Operator, Literal, Keyword, Punct, Token.Identifier, Token.EOL, Token.EOT
@@ -12,6 +15,23 @@ public sealed class Token extends AbstractSyntaxTree
   // todo fix nesting hell somehow
 
   public Token(CharIterator it) throws FailedToTokenizeException {
+    // var list = new ArrayList<Callable<AbstractSyntaxTree>>();
+
+    // list.add(() -> { new Operator((CharIterator)it.clone()); return new Operator(it).children.get(0); });
+    // list.add(() -> { new Literal((CharIterator)it.clone()); return new Literal(it).children.get(0); });
+    // list.add(() -> { new Keyword((CharIterator)it.clone()); return new Keyword(it).children.get(0); });
+    // list.add(() -> { new Punct((CharIterator)it.clone()); return new Punct(it).children.get(0); });
+    // list.add(() -> { new Identifier((CharIterator)it.clone()); return new Identifier(it); });
+    // list.add(() -> { new EOL((CharIterator)it.clone()); return new EOL(it); });
+    // list.add(() -> { new EOT((CharIterator)it.clone()); return new EOT(it); });
+
+    // try {
+    //   children.add(Main.executorService.invokeAny(list));
+    // } catch (InterruptedException | ExecutionException e) { 
+    //   e.getCause().printStackTrace();
+    //   throw new FailedToTokenizeException("Cannot tokenize string. " + e.getCause().getMessage()); 
+    // }
+
     try {
       new Keyword((CharIterator)it.clone()); 
 
@@ -78,6 +98,8 @@ public sealed class Token extends AbstractSyntaxTree
     }
   
     public Identifier(CharIterator it) throws FailedToTokenizeException {
+      if (it.peek() == '\\') it.next();
+
       if (Pattern.matches("[a-zA-Z]", it.peek().toString())) {
         while (alphanum.matcher(it.peek().toString()).matches())
           val += it.next();

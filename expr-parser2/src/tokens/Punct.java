@@ -1,6 +1,9 @@
 package tokens;
 
 import common.*;
+import java.util.*;
+import java.util.concurrent.*;
+import main.Main;
 
 public sealed class Punct extends Token
   permits Punct.Bracket, Punct.Brace, Punct.Parenthesis, Punct.AngleBracket, Punct.Comma, Punct.Period, Punct.Semicolon, Punct.Colon
@@ -8,51 +11,20 @@ public sealed class Punct extends Token
   Punct() {}
 
   public Punct(CharIterator it) throws FailedToTokenizeException {
-    try {
-      new Bracket((CharIterator)it.clone()); 
+    var list = new ArrayList<Callable<AbstractSyntaxTree>>();
 
-      children.add(new Bracket(it));
-    } catch (Exception e) {
-      try {
-        new Brace((CharIterator)it.clone()); 
-  
-        children.add(new Brace(it));
-      } catch (Exception e2) {
-        try {
-          new Parenthesis((CharIterator)it.clone()); 
-    
-          children.add(new Parenthesis(it));
-        } catch (Exception e3) {
-          try {
-            new AngleBracket((CharIterator)it.clone()); 
-      
-            children.add(new AngleBracket(it));
-          } catch (Exception e4) {
-            try {
-              new Comma((CharIterator)it.clone()); 
-        
-              children.add(new Comma(it));
-            } catch (Exception e5) {
-              try {
-                new Period((CharIterator)it.clone()); 
-          
-                children.add(new Period(it));
-              } catch (Exception e6) {
-                try {
-                  new Semicolon((CharIterator)it.clone()); 
-            
-                  children.add(new Semicolon(it));
-                } catch (Exception e7) {
-                  new Colon((CharIterator)it.clone()); 
-            
-                  children.add(new Colon(it));
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    list.add(() -> { new AngleBracket((CharIterator)it.clone()); return new AngleBracket(it).children.get(0); });
+    list.add(() -> { new Parenthesis((CharIterator)it.clone()); return new Parenthesis(it).children.get(0); });
+    list.add(() -> { new Bracket((CharIterator)it.clone()); return new Bracket(it).children.get(0); });
+    list.add(() -> { new Brace((CharIterator)it.clone()); return new Brace(it).children.get(0); });
+    list.add(() -> { new Semicolon((CharIterator)it.clone()); return new Semicolon(it); });
+    list.add(() -> { new Period((CharIterator)it.clone()); return new Period(it); });
+    list.add(() -> { new Comma((CharIterator)it.clone()); return new Comma(it); });
+    list.add(() -> { new Colon((CharIterator)it.clone()); return new Colon(it); });
+
+    try {
+      children.add(Main.executorService.invokeAny(list));
+    } catch (InterruptedException | ExecutionException e) { throw new FailedToTokenizeException(); }
   }
 
   public static sealed class Parenthesis extends Punct

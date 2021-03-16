@@ -1,6 +1,10 @@
 package tokens;
 
+import java.util.*;
+import java.util.concurrent.*;
+
 import common.*;
+import main.Main;
 
 public sealed class Keyword extends Token 
   permits Keyword.Quit, Keyword.InteractiveMode 
@@ -8,15 +12,14 @@ public sealed class Keyword extends Token
   public Keyword() {}
 
   public Keyword(CharIterator it) throws FailedToTokenizeException {
+    var list = new ArrayList<Callable<AbstractSyntaxTree>>();
+
+    list.add(() -> { new Quit((CharIterator)it.clone()); return new Quit(it); });
+    list.add(() -> { new InteractiveMode((CharIterator)it.clone()); return new InteractiveMode(it); });
+
     try {
-      new Quit((CharIterator)it.clone()); 
-
-      children.add(new Quit(it));
-    } catch (Exception e) {
-      new InteractiveMode((CharIterator)it.clone()); 
-
-      children.add(new InteractiveMode(it));
-    }
+      children.add(Main.executorService.invokeAny(list));
+    } catch (InterruptedException | ExecutionException e) { throw new FailedToTokenizeException(); }
   }
 
   public final class InteractiveMode extends Keyword {
