@@ -12,8 +12,8 @@ public class Evaluator {
       if (ast instanceof AbstractSyntaxTree.Expr expr) {
         if (ast.children.size() > 1) {
           Future<Double> future = executorService.submit(() -> Evaluator.evaluate(variables, expr.children.get(0)));
-          Double op1 = Evaluator.evaluate(variables, expr.children.get(2));
-          Double op2 = future.get();
+          Double op2 = Evaluator.evaluate(variables, expr.children.get(2));
+          Double op1 = future.get();
   
           if (expr.children.get(1) instanceof Operator.Add) return op1 + op2;
           else return op1 - op2;
@@ -21,8 +21,8 @@ public class Evaluator {
       } else if (ast instanceof AbstractSyntaxTree.Product product) {
         if (ast.children.size() > 1) {
           Future<Double> future = executorService.submit(() -> Evaluator.evaluate(variables, product.children.get(0)));
-          Double op1 = Evaluator.evaluate(variables, product.children.get(2));
-          Double op2 = future.get();
+          Double op2 = Evaluator.evaluate(variables, product.children.get(2));
+          Double op1 = future.get();
           
           if (product.children.get(1) instanceof Operator.Mult) return op1 * op2;
           else if (product.children.get(1) instanceof Operator.Div) return op1 / op2;
