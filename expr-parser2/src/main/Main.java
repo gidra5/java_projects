@@ -9,7 +9,8 @@ import java.util.stream.Collectors;
 /*
   Syntax definition:
   decl := ident, "=", expr
-  expr := summand, ["-"|"+", expr]
+  derivative_expr := "d[", ident, "](", expr, ")"
+  expr := derivative_expr | summand, ["-"|"+", expr]
   summand := multiplier, ["*"|"/"|"^"|"%", summand]
   multiplier := number | ident | "(", expr, ")"
 
@@ -27,7 +28,7 @@ public class Main {
         return;
       } else {
         var tokenIt = str2tokenIt(args[0]);
-        
+
         if (tokenIt.peek() instanceof Keyword.InteractiveMode) {
           Scanner scanner = new Scanner(System.in);
 
@@ -43,8 +44,8 @@ public class Main {
             else if (cmdExpr instanceof AbstractSyntaxTree.Decl decl) {
               saveVariable(decl);
               printVariables();
-            } else if (cmdExpr instanceof AbstractSyntaxTree.Expr expr) 
-              System.out.println(Evaluator.evaluate(expr));
+            } else if (cmdExpr instanceof AbstractSyntaxTree.Expr expr)
+              System.out.print(Evaluator.evaluate(expr));
 
             System.out.println();
           }
@@ -61,7 +62,7 @@ public class Main {
 
     executorService.shutdown();
   }
-  
+
   public static TokenIterator str2tokenIt(String str) throws FailedToTokenizeException {
     var charIt = new CharIterator(str.replace(" ", ""));
     var tokenList = new ArrayList<Token>();
@@ -70,7 +71,7 @@ public class Main {
       tokenList.add((Token)(new Token(charIt).children.get(0)));
 
     return new TokenIterator(tokenList);
-  } 
+  }
 
   public static void saveVariable(AbstractSyntaxTree.Decl decl) {
     var ident = (Token.Identifier) decl.children.get(0);

@@ -7,7 +7,7 @@ import main.Main;
 
 public sealed class Operator extends Token
   permits Operator.Sub, Operator.Add, Operator.Mult, Operator.Div, Operator.Pow, Operator.Mod, Operator.Equal
-{ 
+{
   Operator() {}
 
   public Operator(CharIterator it) throws FailedToTokenizeException {
@@ -25,49 +25,55 @@ public sealed class Operator extends Token
       children.add(Main.executorService.invokeAny(list));
     } catch (InterruptedException | ExecutionException e) { throw new FailedToTokenizeException(); }
   }
-  
+
   public static final class Sub extends Operator {
+    public Sub() {}
     public Sub(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '-') it.next();
       else throw new FailedToTokenizeException();
     }
   }
-  
+
   public static final class Add extends Operator {
+    public Add() {}
     public Add(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '+') it.next();
       else throw new FailedToTokenizeException();
     }
   }
-  
+
   public static final class Mult extends Operator {
+    public Mult() {}
     public Mult(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '*') it.next();
       else throw new FailedToTokenizeException();
     }
   }
-  
+
   public static final class Div extends Operator {
+    public Div() {}
     public Div(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '/') it.next();
       else throw new FailedToTokenizeException();
     }
   }
-  
+
   public static final class Pow extends Operator {
+    public Pow() {}
     public Pow(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '^') it.next();
       else throw new FailedToTokenizeException();
     }
   }
-  
+
   public static final class Mod extends Operator {
+    public Mod() {}
     public Mod(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '%') it.next();
       else throw new FailedToTokenizeException();
     }
   }
-  
+
   public static final class Equal extends Operator {
     public Equal(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '=') it.next();

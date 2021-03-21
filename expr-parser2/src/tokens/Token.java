@@ -8,13 +8,14 @@ import java.util.regex.*;
 
 public sealed class Token extends AbstractSyntaxTree
   permits Operator, Literal, Keyword, Punct, Token.Identifier, Token.EOL, Token.EOT
-{ 
+{
 
   Token() {}
 
   // todo fix nesting hell somehow
 
   public Token(CharIterator it) throws FailedToTokenizeException {
+    // since order matters this paralelism fails
     // var list = new ArrayList<Callable<AbstractSyntaxTree>>();
 
     // list.add(() -> { new Operator((CharIterator)it.clone()); return new Operator(it).children.get(0); });
@@ -27,42 +28,42 @@ public sealed class Token extends AbstractSyntaxTree
 
     // try {
     //   children.add(Main.executorService.invokeAny(list));
-    // } catch (InterruptedException | ExecutionException e) { 
+    // } catch (InterruptedException | ExecutionException e) {
     //   e.getCause().printStackTrace();
-    //   throw new FailedToTokenizeException("Cannot tokenize string. " + e.getCause().getMessage()); 
+    //   throw new FailedToTokenizeException("Cannot tokenize string. " + e.getCause().getMessage());
     // }
 
     try {
-      new Keyword((CharIterator)it.clone()); 
+      new Keyword((CharIterator)it.clone());
 
       children.add(new Keyword(it).children.get(0));
     } catch (Exception e) {
       try {
-        new Literal((CharIterator)it.clone()); 
+        new Literal((CharIterator)it.clone());
 
         children.add(new Literal(it).children.get(0));
       } catch (Exception e2) {
         try {
-          new Identifier((CharIterator)it.clone()); 
+          new Identifier((CharIterator)it.clone());
 
           children.add(new Identifier(it));
         } catch (Exception e3) {
           try {
-            new Operator((CharIterator)it.clone()); 
+            new Operator((CharIterator)it.clone());
 
             children.add(new Operator(it).children.get(0));
           } catch (Exception e4) {
             try {
-              new Punct((CharIterator)it.clone()); 
+              new Punct((CharIterator)it.clone());
 
               children.add(new Punct(it).children.get(0));
             } catch (Exception e5) {
               try {
-                new EOL((CharIterator)it.clone()); 
+                new EOL((CharIterator)it.clone());
 
                 children.add(new EOL(it));
               } catch (Exception e6) {
-                new EOT((CharIterator)it.clone()); 
+                new EOT((CharIterator)it.clone());
 
                 children.add(new EOT(it));
               }
@@ -82,7 +83,7 @@ public sealed class Token extends AbstractSyntaxTree
 
   public static final class EOT extends Token {
     public EOT() {}
-  
+
     public EOT(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '\0') it.next();
       else throw new FailedToTokenizeException();
@@ -92,11 +93,11 @@ public sealed class Token extends AbstractSyntaxTree
   public static final class Identifier extends Token {
     static final Pattern alphanum = Pattern.compile("[0-9a-zA-Z_]");
     public String val = "";
-  
+
     public Identifier(String val) {
       this.val = val;
     }
-  
+
     public Identifier(CharIterator it) throws FailedToTokenizeException {
       if (it.peek() == '\\') it.next();
 
