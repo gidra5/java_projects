@@ -37,6 +37,11 @@ public class CharIterator implements Iterator<Character>, Cloneable {
     else return str.charAt(pos + step);
   }
 
+  public boolean check(String str) {
+    // TODO implement 
+    return false;
+  }
+
   public void setPos(int p) {
     if (p >= str.length()) throw new ArrayIndexOutOfBoundsException(p);
     else pos = p;

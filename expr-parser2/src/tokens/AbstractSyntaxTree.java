@@ -13,7 +13,8 @@ permits Token,
   AbstractSyntaxTree.Product,
   AbstractSyntaxTree.Multiplier,
   AbstractSyntaxTree.Decl,
-  AbstractSyntaxTree.CmdExpr
+  AbstractSyntaxTree.CmdExpr,
+  AbstractSyntaxTree.FnExpr
 {
   public ArrayList<AbstractSyntaxTree> children = new ArrayList<>();
 
@@ -22,6 +23,25 @@ permits Token,
       return super.clone();
     } catch (Exception e) {
       return null;
+    }
+  }
+  
+  public static final class FnExpr extends AbstractSyntaxTree {
+    public FnExpr() {}
+    public FnExpr(TokenIterator it) throws FailedToParseException {
+      if (it.peek() instanceof Token.Identifier id) {
+        children.add(it.next());
+        
+        if (it.peek() instanceof Punct.Parenthesis.Left) {
+          it.next();
+
+          children.add(new Expr(it));
+          
+          if (it.peek() instanceof Punct.Parenthesis.Right) 
+            it.next();
+          else throw new FailedToParseException("Expected right parenthesis");
+        } else throw new FailedToParseException("Expected left parenthesis");
+      } else throw new FailedToParseException("Expected ident");
     }
   }
 
@@ -53,17 +73,29 @@ permits Token,
   }
 
   public static final class Decl extends AbstractSyntaxTree {
+    public Decl() {}
     public Decl(TokenIterator it) throws FailedToParseException {
-      if (!(it.peek() instanceof Token.Identifier)) {
-      throw new FailedToParseException("Unexpected token");
-    }
-      children.add(it.next());
+      if (it.peek() instanceof Token.Identifier) {
+        children.add(it.next());
 
-      if (!(it.next() instanceof Operator.Equal)) {
-        throw new FailedToParseException("Unexpected token");
-      }
+        if (it.peek() instanceof Punct.Parenthesis.Left) {
+          it.next();
 
-      children.add(new Expr(it));
+          if (it.peek() instanceof Token.Identifier) 
+            children.add(it.next());
+          else throw new FailedToParseException("Expected ident");
+          
+          if (it.peek() instanceof Punct.Parenthesis.Right)
+            it.next();
+          else throw new FailedToParseException("Expected right parenthesis");
+        } 
+
+        if (!(it.next() instanceof Operator.Equal)) {
+          throw new FailedToParseException("Unexpected token");
+        }
+
+        children.add(new Expr(it));
+      } else throw new FailedToParseException("Unexpected token");
     }
   }
 
@@ -77,15 +109,7 @@ permits Token,
       else
         throw new FailedToParseException("not of the form \" d[ident] \"");
 
-      if (!(it.next() instanceof Punct.Parenthesis.Left))
-        throw new FailedToParseException("missing opening parenthesis");
-
-      var ast = new Expr(it);
-
-      if (it.next() instanceof Punct.Parenthesis.Right)
-        children.add(ast);
-      else
-        throw new FailedToParseException("missing closing parenthesis");
+        children.add(new Expr(it));
     }
   }
 
@@ -95,20 +119,26 @@ permits Token,
       if (it.peek() instanceof Keyword.Derivative) {
         children.add(new DerivativeExpr(it));
       } else {
-        children.add(new Product(it));
+        try {
+          new FnExpr((TokenIterator)it.clone());
 
-        // will work when switch pattern matching will be supported
-        //
-        // switch (it.peek()) {
-        //   case Add, Sub -> ast.children.add(it.next());
-        //   default -> { return ast; }
-        // }
-
-        if (it.peek() instanceof Operator.Add
-         || it.peek() instanceof Operator.Sub)
-        {
-          children.add(it.next());
-          children.add(new Expr(it));
+          children.add(new FnExpr(it));
+        } catch (Exception e) {
+          children.add(new Product(it));
+  
+          // will work when switch pattern matching will be supported
+          //
+          // switch (it.peek()) {
+          //   case Add, Sub -> ast.children.add(it.next());
+          //   default -> { return ast; }
+          // }
+  
+          if (it.peek() instanceof Operator.Add
+           || it.peek() instanceof Operator.Sub)
+          {
+            children.add(it.next());
+            children.add(new Expr(it));
+          }
         }
       }
     }

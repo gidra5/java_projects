@@ -8,9 +8,10 @@ import java.util.stream.Collectors;
 
 /*
   Syntax definition:
-  decl := ident, "=", expr
-  derivative_expr := "d[", ident, "](", expr, ")"
-  expr := derivative_expr | summand, ["-"|"+", expr]
+  decl := ident, ["(", ident, ")"], "=", expr
+  derivative_expr := "d[", ident, "]", expr
+  fn_expr := ident, "(", expr, ")"
+  expr := derivative_expr | summand, ["-"|"+", expr] | fn_expr
   summand := multiplier, ["*"|"/"|"^"|"%", summand]
   multiplier := number | ident | "(", expr, ")"
 
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static final ExecutorService executorService = Executors.newFixedThreadPool(16);
-  public static final HashMap<Token.Identifier, AbstractSyntaxTree.Expr> variables = new HashMap<Token.Identifier, AbstractSyntaxTree.Expr>();
+  public static final ArrayList<AbstractSyntaxTree.Decl> decls = new ArrayList<>();
 
   public static void main(String[] args) {
     try {
@@ -42,7 +43,7 @@ public class Main {
 
             if (cmdExpr instanceof Keyword.Quit) break;
             else if (cmdExpr instanceof AbstractSyntaxTree.Decl decl) {
-              saveVariable(decl);
+              decls.add(decl);
               printVariables();
             } else if (cmdExpr instanceof AbstractSyntaxTree.Expr expr)
               System.out.print(Evaluator.evaluate(expr));
@@ -73,16 +74,19 @@ public class Main {
     return new TokenIterator(tokenList);
   }
 
-  public static void saveVariable(AbstractSyntaxTree.Decl decl) {
-    var ident = (Token.Identifier) decl.children.get(0);
-    var expr = (AbstractSyntaxTree.Expr) decl.children.get(1);
-    variables.put(ident, expr);
-  }
-
   public static void printVariables() {
-    var it = variables.keySet()
+    var it = decls
       .stream()
-      .map(ident -> (Callable<Void>)(() -> { System.out.print(ident.val + " = " + Evaluator.evaluate(variables.get(ident)) + " "); return null; }))
+      .map(decl -> (Callable<Void>)(() -> {
+        if (decl.children.get(1) instanceof AbstractSyntaxTree.Expr expr && decl.children.get(0) instanceof Token.Identifier ident) {
+          System.out.print(ident.val + " = " + Evaluator.evaluate(expr) + " "); 
+          // System.out.println(ident.val + " = " + expr.toString() + " = " + Evaluator.evaluate(expr) + " "); 
+        } 
+        // else if (decl.children.get(1) instanceof Token.Identifier arg){
+        //   System.out.println(ident.val + " " + arg.val + " = " + decl.children.get(2).toString() + " "); 
+        // }
+        return null; 
+      }))
       .collect(Collectors.toList());
 
     try {
@@ -90,6 +94,5 @@ public class Main {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    // variables.keySet().parallelStream().forEach(ident -> System.out.print(ident.val + " = " + Evaluator.evaluate(variables.get(ident)) + " "));
   }
 }
