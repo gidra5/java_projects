@@ -29,56 +29,76 @@ public sealed class Operator extends Token
   public static final class Sub extends Operator {
     public Sub() {}
     public Sub(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '-') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("-")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "-";
     }
   }
 
   public static final class Add extends Operator {
     public Add() {}
     public Add(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '+') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("+")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "+";
     }
   }
 
   public static final class Mult extends Operator {
     public Mult() {}
     public Mult(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '*') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("*")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "*";
     }
   }
 
   public static final class Div extends Operator {
     public Div() {}
     public Div(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '/') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("/")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "/";
     }
   }
 
   public static final class Pow extends Operator {
     public Pow() {}
     public Pow(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '^') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("^")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "^";
     }
   }
 
   public static final class Mod extends Operator {
     public Mod() {}
     public Mod(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '%') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("%")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "%";
     }
   }
 
   public static final class Equal extends Operator {
     public Equal(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '=') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("=")) throw new FailedToTokenizeException();
     }
 
+    public String toString() {
+      return "=";
+    }
   }
 }

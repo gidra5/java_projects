@@ -15,31 +15,43 @@ public class CharIterator implements Iterator<Character>, Cloneable {
   }
 
   public Character next() {
-    if (pos >= str.length()) return '\0';
+    if (!hasNext()) return '\0';
+    while (peek() == ' ')
+      ++pos;
     return str.charAt(pos++);
   }
 
-  public Character next(int step) {
-    if (pos + step >= str.length()) return '\0';
+  public String next(int size) {
+    if (!hasNext()) return "";
+    else if (pos + size >= str.length())
+      return str.substring(pos);
     else {
-      pos += step;
-      return str.charAt(pos++);
+      pos += size;
+      return str.substring(pos - size, pos);
     }
   }
 
   public Character peek() {
-    if (pos >= str.length()) return '\0';
-    else return str.charAt(pos);
+    return hasNext() ? str.charAt(pos) : '\0';
   }
 
-  public Character peek(int step) {
-    if (pos + step >= str.length()) return '\0';
-    else return str.charAt(pos + step);
+  public String peek(int size) {
+    if (!hasNext()) return "";
+    else if (pos + size >= str.length())
+      return str.substring(pos);
+    else
+      return str.substring(pos, pos + size);
   }
 
   public boolean check(String str) {
-    // TODO implement 
-    return false;
+    var substr = peek(str.length());
+
+    if (!substr.equals(str))
+      return false;
+
+    pos += str.length();
+
+    return true;
   }
 
   public void setPos(int p) {
@@ -59,4 +71,3 @@ public class CharIterator implements Iterator<Character>, Cloneable {
     }
   }
 }
-

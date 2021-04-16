@@ -1,6 +1,5 @@
 package common;
 import java.util.concurrent.*;
-import java.util.*;
 
 import tokens.*;
 import main.Main;
@@ -12,11 +11,32 @@ public class Evaluator {
     return Evaluator.evaluate(Main.decls, ast);
   }
 
-  public static double evaluate(ArrayList<AbstractSyntaxTree.Decl> decls, AbstractSyntaxTree ast) {
+  public static double evaluate(DeclSet decls, AbstractSyntaxTree ast) {
     try {
       if (ast instanceof AbstractSyntaxTree.DerivativeExpr expr &&
-          expr.children.get(0) instanceof Token.Identifier ident)
+          expr.children.get(0) instanceof Token.Identifier ident) {
+        if (expr.children.get(1) instanceof AbstractSyntaxTree.FnExpr fnExpr &&
+            fnExpr.children.get(0) instanceof Token.Identifier fnIdent) {
+
+          var variableDecl = decls.get(fnIdent);
+
+          if (variableDecl != null) {
+            if (variableDecl.children.get(1) instanceof Token.Identifier arg &&
+                decls.clone() instanceof DeclSet declsCopy) {
+              var decl = new AbstractSyntaxTree.Decl();
+              decl.children.add(arg);
+              decl.children.add(fnExpr.children.get(1));
+
+              declsCopy.add(decl);
+
+              return Evaluator.evaluate(decls, Evaluator.derivative(declsCopy, ident, variableDecl.children.get(2)));
+            } else System.out.println(fnIdent.val + " is not a function");
+          }
+        }
+
         return Evaluator.evaluate(decls, Evaluator.derivative(decls, ident, expr.children.get(1)));
+      }
+
       else if (ast instanceof AbstractSyntaxTree.Expr expr) {
         if (ast.children.size() > 1) {
           Future<Double> future = Main.executorService.submit(() -> Evaluator.evaluate(decls, expr.children.get(0)));
@@ -50,51 +70,45 @@ public class Evaluator {
       } else if (ast instanceof Literal.Num num) {
         return num.val;
       } else if (ast instanceof Token.Identifier id) {
-        try {
-          var variableDecl = decls.stream()
-            .filter(x -> x.children.get(0).equals(id)).findFirst().get();
+        var variableDecl = decls.get(id);
 
-          if (variableDecl.children.get(1) instanceof AbstractSyntaxTree.Expr expr) 
+        if (variableDecl != null) {
+          if (variableDecl.children.get(1) instanceof AbstractSyntaxTree.Expr expr)
             return Evaluator.evaluate(decls, expr);
           else
-            System.out.println(id.val + " is a function ");
-        } catch (NoSuchElementException e) {
-          System.out.println("[e]No variable " + id.val);
+            System.out.println(id.val + " is a function");
         }
-      } 
+      }
       else if (ast instanceof AbstractSyntaxTree.FnExpr expr &&
                expr.children.get(0) instanceof Token.Identifier id) {
-        try {
-          if (id.val.equals("log")) {
-            return Math.log(Evaluator.evaluate(decls, expr.children.get(1)));
-          } else if (id.val.equals("floor")) {
-            return Math.floor(Evaluator.evaluate(decls, expr.children.get(1)));
-          } else {
-            var variableDecl = decls.stream()
-              .filter(x -> x.children.get(0).equals(id)).findFirst().get();
-    
-            if (variableDecl.children.get(1) instanceof Token.Identifier arg && 
-                decls.clone() instanceof ArrayList declsCopy) {
+        if (id.val.equals("log")) {
+          return Math.log(Evaluator.evaluate(decls, expr.children.get(1)));
+        } else if (id.val.equals("floor")) {
+          return Math.floor(Evaluator.evaluate(decls, expr.children.get(1)));
+        } else {
+          var variableDecl = decls.get(id);
+
+          if (variableDecl != null) {
+            if (variableDecl.children.get(1) instanceof Token.Identifier arg &&
+                decls.clone() instanceof DeclSet declsCopy) {
               var decl = new AbstractSyntaxTree.Decl();
               decl.children.add(arg);
               decl.children.add(expr.children.get(1));
-              
+
               declsCopy.add(decl);
-  
+
               return Evaluator.evaluate(declsCopy, variableDecl.children.get(2));
-            } else System.out.println("Variable is not a function " + ((Token.Identifier) variableDecl.children.get(0)).val);
+            } else System.out.println(id.val + " is not a function");
           }
-        } catch (NoSuchElementException e) {
-          System.out.println("No function " + id.val);
         }
-      } 
+      }
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
     return 0.;
   }
 
-  public static AbstractSyntaxTree derivative(ArrayList<AbstractSyntaxTree.Decl> decls, Token.Identifier ident, AbstractSyntaxTree ast) {
+  public static AbstractSyntaxTree derivative(DeclSet decls, Token.Identifier ident, AbstractSyntaxTree ast) {
     try {
       if (ast instanceof AbstractSyntaxTree.DerivativeExpr expr) {
         var ident2 = (Token.Identifier)expr.children.get(0);
@@ -171,16 +185,19 @@ public class Evaluator {
             var prod3 = new AbstractSyntaxTree.Product();
             var prod4 = new AbstractSyntaxTree.Product();
             var prod5 = new AbstractSyntaxTree.Product();
+            var multiplier = new AbstractSyntaxTree.Multiplier();
             var expr = new AbstractSyntaxTree.Expr();
             var expr2 = new AbstractSyntaxTree.Expr();
             var fnExpr = new AbstractSyntaxTree.FnExpr();
-            
+
+            multiplier.children.add(expr);
+
             fnExpr.children.add(new Token.Identifier("log"));
             fnExpr.children.add(product.children.get(0));
 
             prod.children.add(product.children.get(0));
             prod.children.add(new Operator.Pow());
-            prod.children.add(expr);
+            prod.children.add(multiplier);
 
             expr.children.add(product.children.get(2));
             expr.children.add(new Operator.Sub());
@@ -189,11 +206,11 @@ public class Evaluator {
             prod2.children.add(prod);
             prod2.children.add(new Operator.Mult());
             prod2.children.add(expr2);
-            
+
             expr2.children.add(prod3);
             expr2.children.add(new Operator.Add());
             expr2.children.add(prod4);
-            
+
             prod3.children.add(product.children.get(2));
             prod3.children.add(new Operator.Mult());
             prod3.children.add(op1);
@@ -201,7 +218,7 @@ public class Evaluator {
             prod4.children.add(fnExpr);
             prod4.children.add(new Operator.Mult());
             prod4.children.add(prod5);
-            
+
             prod5.children.add(op2);
             prod5.children.add(new Operator.Mult());
             prod5.children.add(product.children.get(0));
@@ -227,7 +244,7 @@ public class Evaluator {
 
             fnExpr.children.add(new Token.Identifier("floor"));
             fnExpr.children.add(prod2);
-            
+
             prod2.children.add(product.children.get(0));
             prod2.children.add(new Operator.Div());
             prod2.children.add(product.children.get(2));
@@ -242,52 +259,56 @@ public class Evaluator {
       } else if (ast instanceof Token.Identifier id) {
         if (id.equals(ident)) return new Literal.Num(1.);
         else {
-          try {
-            var variableDecl = decls.stream()
-              .filter(x -> x.children.get(0).equals(id)).findFirst().get();
+          var variableDecl = decls.get(id);
 
+          if (variableDecl != null) {
             if (variableDecl.children.get(1) instanceof Token.Identifier arg && arg.equals(ident))
               return Evaluator.derivative(decls, ident, variableDecl.children.get(2));
 
             return Evaluator.derivative(decls, ident, variableDecl.children.get(1));
-          } catch (NoSuchElementException e) {
-            System.out.println("[d]No variable " + id.val);
           }
         }
-      } 
+      }
       else if (ast instanceof AbstractSyntaxTree.FnExpr expr &&
                expr.children.get(0) instanceof Token.Identifier id) {
-        try {
-          if (id.val.equals("log")) {
-            var prod = new AbstractSyntaxTree.Product();
+        if (id.val.equals("log")) {
+          var prod = new AbstractSyntaxTree.Product();
 
-            prod.children.add(Evaluator.derivative(decls, ident, expr.children.get(1)));
-            prod.children.add(new Operator.Div());
-            prod.children.add(expr.children.get(1));
+          prod.children.add(Evaluator.derivative(decls, ident, expr.children.get(1)));
+          prod.children.add(new Operator.Div());
+          prod.children.add(expr.children.get(1));
 
-            return prod;
-          } else if (id.val.equals("floor")) return new Literal.Num(0.);
-          else {
-            var variableDecl = decls.stream()
-              .filter(x -> x.children.get(0).equals(id)).findFirst().get();
-    
+          return prod;
+        } else if (id.val.equals("floor")) return new Literal.Num(0.);
+        else {
+          var variableDecl = decls.get(id);
+
+          if (variableDecl != null) {
             if (variableDecl.children.get(1) instanceof Token.Identifier arg) {
-              Future<AbstractSyntaxTree> future = Main.executorService.submit(() -> Evaluator.derivative(decls, arg, variableDecl.children.get(2)));
+              Future<AbstractSyntaxTree> future = Main.executorService.submit(() ->
+                Evaluator.derivative(decls, arg, variableDecl.children.get(2)));
+              // Future<AbstractSyntaxTree> future2 = Main.executorService.submit(() ->
+              //   Evaluator.derivative(decls, ident, variableDecl.children.get(2)));
               var op2 = Evaluator.derivative(decls, ident, expr.children.get(1));
               var op1 = future.get();
+              // var op3 = future2.get();
+              // var sum = new AbstractSyntaxTree.Expr();
               var prod = new AbstractSyntaxTree.Product();
-              
+
               prod.children.add(op1);
               prod.children.add(new Operator.Mult());
               prod.children.add(op2);
-  
+
+              // sum.children.add(op3);
+              // sum.children.add(new Operator.Add());
+              // sum.children.add(prod);
+
+              // return sum;
               return prod;
-            } else System.out.println(((Token.Identifier) variableDecl.children.get(0)).val + " is not a function ");
+            } else System.out.println(id.val + " is not a function");
           }
-        } catch (NoSuchElementException e) {
-          System.out.println("No function " + id.val);
         }
-      } 
+      }
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }

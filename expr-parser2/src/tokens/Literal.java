@@ -38,5 +38,9 @@ public sealed class Literal extends Token
         val = Double.parseDouble(strVal);
       } else throw new FailedToTokenizeException();
     }
+
+    public String toString() {
+      return String.format("%f", val);
+    }
   }
 }

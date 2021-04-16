@@ -12,10 +12,10 @@ public sealed class Token extends AbstractSyntaxTree
 
   Token() {}
 
-  // todo fix nesting hell somehow
+  // fixed nesting but still not perfect
 
   public Token(CharIterator it) throws FailedToTokenizeException {
-    // since order matters this paralelism fails
+    // since order matters this parallelism fails
     // var list = new ArrayList<Callable<AbstractSyntaxTree>>();
 
     // list.add(() -> { new Operator((CharIterator)it.clone()); return new Operator(it).children.get(0); });
@@ -37,47 +37,66 @@ public sealed class Token extends AbstractSyntaxTree
       new Keyword((CharIterator)it.clone());
 
       children.add(new Keyword(it).children.get(0));
-    } catch (Exception e) {
-      try {
-        new Literal((CharIterator)it.clone());
+      return;
+    } catch (Exception e) {}
 
-        children.add(new Literal(it).children.get(0));
-      } catch (Exception e2) {
-        try {
-          new Identifier((CharIterator)it.clone());
+    try {
+      new Literal((CharIterator)it.clone());
 
-          children.add(new Identifier(it));
-        } catch (Exception e3) {
-          try {
-            new Operator((CharIterator)it.clone());
+      children.add(new Literal(it).children.get(0));
+      return;
+    } catch (Exception e) {}
 
-            children.add(new Operator(it).children.get(0));
-          } catch (Exception e4) {
-            try {
-              new Punct((CharIterator)it.clone());
+    try {
+      new Identifier((CharIterator)it.clone());
 
-              children.add(new Punct(it).children.get(0));
-            } catch (Exception e5) {
-              try {
-                new EOL((CharIterator)it.clone());
+      children.add(new Identifier(it));
+      return;
+    } catch (Exception e) {}
 
-                children.add(new EOL(it));
-              } catch (Exception e6) {
-                new EOT((CharIterator)it.clone());
+    try {
+      new Operator((CharIterator)it.clone());
 
-                children.add(new EOT(it));
-              }
-            }
-          }
-        }
-      }
-    }
+      children.add(new Operator(it).children.get(0));
+      return;
+    } catch (Exception e) {}
+
+    try {
+      new Punct((CharIterator)it.clone());
+
+      children.add(new Punct(it).children.get(0));
+      return;
+    } catch (Exception e) {}
+
+    try {
+      new EOL((CharIterator)it.clone());
+
+      children.add(new EOL(it));
+      return;
+    } catch (Exception e) {}
+
+    children.add(new EOT(it));
+  }
+
+  public static Token parse(CharIterator it) throws FailedToTokenizeException {
+    // if (it.peek() instanceof Keyword.Quit)
+    //   return it.next();
+
+    // try {
+    //   return new Decl(it);
+    // } catch (Exception e) {  }
+
+    // return new Expr(it);
+    return (Token)(new Token(it).children.get(0));
   }
 
   public static final class EOL extends Token {
     public EOL(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '\n' || it.peek() == ';') it.next();
-      else throw new FailedToTokenizeException();
+      if (!(it.check("\n") || it.check(";"))) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "\n";
     }
   }
 
@@ -85,8 +104,11 @@ public sealed class Token extends AbstractSyntaxTree
     public EOT() {}
 
     public EOT(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '\0') it.next();
-      else throw new FailedToTokenizeException();
+      if (!it.check("")) throw new FailedToTokenizeException();
+    }
+
+    public String toString() {
+      return "";
     }
   }
 
@@ -99,9 +121,11 @@ public sealed class Token extends AbstractSyntaxTree
     }
 
     public Identifier(CharIterator it) throws FailedToTokenizeException {
-      if (it.peek() == '\\') it.next();
+      it.check("\\");
 
-      if (Pattern.matches("[a-zA-Z]", it.peek().toString())) {
+      if (Pattern.matches("[a-zA-Z_]", it.peek().toString())) {
+        val += it.next();
+
         while (alphanum.matcher(it.peek().toString()).matches())
           val += it.next();
       } else throw new FailedToTokenizeException();
@@ -115,6 +139,10 @@ public sealed class Token extends AbstractSyntaxTree
 
     public int hashCode() {
       return this.val.hashCode();
+    }
+
+    public String toString() {
+      return val;
     }
   }
 }
