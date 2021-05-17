@@ -2,147 +2,167 @@ package tokens;
 
 import common.*;
 import java.util.regex.*;
-// import java.util.*;
-// import java.util.concurrent.*;
-// import main.Main;
+import java.util.*;
 
-public sealed class Token extends AbstractSyntaxTree
-  permits Operator, Literal, Keyword, Punct, Token.Identifier, Token.EOL, Token.EOT
-{
+public record Token(TokenType type, String src) {
+  private static HashMap<String, TokenType> tokenTable = new HashMap<>();
 
-  Token() {}
-
-  // fixed nesting but still not perfect
-
-  public Token(CharIterator it) throws FailedToTokenizeException {
-    // since order matters this parallelism fails
-    // var list = new ArrayList<Callable<AbstractSyntaxTree>>();
-
-    // list.add(() -> { new Operator((CharIterator)it.clone()); return new Operator(it).children.get(0); });
-    // list.add(() -> { new Literal((CharIterator)it.clone()); return new Literal(it).children.get(0); });
-    // list.add(() -> { new Keyword((CharIterator)it.clone()); return new Keyword(it).children.get(0); });
-    // list.add(() -> { new Punct((CharIterator)it.clone()); return new Punct(it).children.get(0); });
-    // list.add(() -> { new Identifier((CharIterator)it.clone()); return new Identifier(it); });
-    // list.add(() -> { new EOL((CharIterator)it.clone()); return new EOL(it); });
-    // list.add(() -> { new EOT((CharIterator)it.clone()); return new EOT(it); });
-
-    // try {
-    //   children.add(Main.executorService.invokeAny(list));
-    // } catch (InterruptedException | ExecutionException e) {
-    //   e.getCause().printStackTrace();
-    //   throw new FailedToTokenizeException("Cannot tokenize string. " + e.getCause().getMessage());
-    // }
-
-    try {
-      new Keyword((CharIterator)it.clone());
-
-      children.add(new Keyword(it).children.get(0));
-      return;
-    } catch (Exception e) {}
-
-    try {
-      new Literal((CharIterator)it.clone());
-
-      children.add(new Literal(it).children.get(0));
-      return;
-    } catch (Exception e) {}
-
-    try {
-      new Identifier((CharIterator)it.clone());
-
-      children.add(new Identifier(it));
-      return;
-    } catch (Exception e) {}
-
-    try {
-      new Operator((CharIterator)it.clone());
-
-      children.add(new Operator(it).children.get(0));
-      return;
-    } catch (Exception e) {}
-
-    try {
-      new Punct((CharIterator)it.clone());
-
-      children.add(new Punct(it).children.get(0));
-      return;
-    } catch (Exception e) {}
-
-    try {
-      new EOL((CharIterator)it.clone());
-
-      children.add(new EOL(it));
-      return;
-    } catch (Exception e) {}
-
-    children.add(new EOT(it));
+  static {
+    tokenTable.put("let", TokenType.Let);
+    tokenTable.put("quit", TokenType.Quit);
+    tokenTable.put("d", TokenType.Derivative);
+    tokenTable.put("i", TokenType.InteractiveMode);
+    
+    tokenTable.put("-", TokenType.Sub);
+    tokenTable.put("+", TokenType.Add);
+    tokenTable.put("*", TokenType.Mult);
+    tokenTable.put("/", TokenType.Div);
+    tokenTable.put("^", TokenType.Pow);
+    tokenTable.put("%", TokenType.Mod);
+    tokenTable.put("=", TokenType.Equal);
+    tokenTable.put("!", TokenType.Factorial);
+    tokenTable.put("[", TokenType.LBracket);
+    tokenTable.put("]", TokenType.RBracket);
+    tokenTable.put("{", TokenType.LBrace);
+    tokenTable.put("}", TokenType.RBrace);
+    tokenTable.put("(", TokenType.LParenthesis);
+    tokenTable.put(")", TokenType.RParenthesis);
+    tokenTable.put("<", TokenType.LAngleBracket);
+    tokenTable.put(">", TokenType.RAngleBracket);
+    tokenTable.put(".", TokenType.Period);
+    tokenTable.put(",", TokenType.Comma);
+    tokenTable.put(":", TokenType.Colon);
+    tokenTable.put(";", TokenType.Semicolon);
+    tokenTable.put("\n", TokenType.EOL);
+    tokenTable.put("\0", TokenType.EOT);
+    tokenTable.put("\t", TokenType.Skip);
+    tokenTable.put(" ", TokenType.Skip);
   }
 
-  public static Token parse(CharIterator it) throws FailedToTokenizeException {
-    // if (it.peek() instanceof Keyword.Quit)
-    //   return it.next();
-
-    // try {
-    //   return new Decl(it);
-    // } catch (Exception e) {  }
-
-    // return new Expr(it);
-    return (Token)(new Token(it).children.get(0));
+  public Token() {
+    this(TokenType.None);
+  }
+  
+  public Token(TokenType type) {
+    this(type, "");
   }
 
-  public static final class EOL extends Token {
-    public EOL(CharIterator it) throws FailedToTokenizeException {
-      if (!(it.check("\n") || it.check(";"))) throw new FailedToTokenizeException();
+  private static Token tokenizeIdentifier(CharIterator it) {
+    var src = "";
+    var type = TokenType.None;
+
+    if (Pattern.matches("[a-zA-Z_]", it.peek().toString())) {
+      Pattern alphanum = Pattern.compile("[0-9a-zA-Z_]");
+      type = TokenType.Identifier;
+      src += it.next();
+
+      while (alphanum.matcher(it.peek().toString()).matches())
+        src += it.next();
     }
 
-    public String toString() {
-      return "\n";
+    return new Token(type, src);
+  }
+  
+  private static Token tokenizeNumber(CharIterator it) {
+    var src = "";
+    var type = TokenType.None;
+
+    final Pattern digit = Pattern.compile("[0-9]");
+    if (digit.matcher(it.peek().toString()).matches()) {
+      src = "";
+
+      while (digit.matcher(it.peek().toString()).matches())
+        src += it.next();
+
+      if (it.peek() == '.') {
+        src += it.next();
+
+        while (digit.matcher(it.peek().toString()).matches())
+          src += it.next();
+      }
+
+      type = TokenType.Number;
     }
+
+    return new Token(type, src);
   }
 
-  public static final class EOT extends Token {
-    public EOT() {}
+  public static Token tokenize(CharIterator it) {
+    var src = "";
+    var type = TokenType.None;
+    var ident = tokenizeIdentifier(it);
 
-    public EOT(CharIterator it) throws FailedToTokenizeException {
-      if (!it.check("")) throw new FailedToTokenizeException();
-    }
+    src = ident.src();
+    type = ident.type();
 
-    public String toString() {
-      return "";
+    if (type == TokenType.Identifier) {
+      type = tokenTable.get(src);
+      if (type == null) type = TokenType.Identifier;
+      // type = switch (src) {
+      //   case "let" -> TokenType.Let;
+      //   case "quit" -> TokenType.Quit;
+      //   case "d" -> TokenType.Derivative;
+      //   case "i" -> TokenType.InteractiveMode;
+      //   default -> TokenType.Identifier;
+      // };
+    } else {
+      var number = tokenizeNumber(it);
+  
+      src = number.src();
+      type = number.type();
+
+      if (type == TokenType.None) {
+        src = it.peek().toString();
+        type = tokenTable.get(src);
+        if (type == null) type = TokenType.None;
+        else it.next();
+        // src = it.peek().toString();
+
+        // type = switch (src) {
+        //   case "-" -> TokenType.Sub;
+        //   case "+" -> TokenType.Add;
+        //   case "*" -> TokenType.Mult;
+        //   case "/" -> TokenType.Div;
+        //   case "^" -> TokenType.Pow;
+        //   case "%" -> TokenType.Mod;
+        //   case "=" -> TokenType.Equal;
+        //   case "!" -> TokenType.Factorial;
+        //   case "[" -> TokenType.LBracket;
+        //   case "]" -> TokenType.RBracket;
+        //   case "{" -> TokenType.LBrace;
+        //   case "}" -> TokenType.RBrace;
+        //   case "(" -> TokenType.LParenthesis;
+        //   case ")" -> TokenType.RParenthesis;
+        //   case "<" -> TokenType.LAngleBracket;
+        //   case ">" -> TokenType.RAngleBracket;
+        //   case "." -> TokenType.Period;
+        //   case "," -> TokenType.Comma;
+        //   case ":" -> TokenType.Colon;
+        //   case ";" -> TokenType.Semicolon;
+        //   case "\n" -> TokenType.EOL;
+        //   case "\0" -> TokenType.EOT;
+        //   case " ", "\t" -> TokenType.Skip;
+        //   default -> TokenType.None;
+        // };
+
+        // if (type != TokenType.None) it.next(); 
+      }
     }
+    
+    return new Token(type, src);
   }
 
-  public static final class Identifier extends Token {
-    static final Pattern alphanum = Pattern.compile("[0-9a-zA-Z_]");
-    public String val = "";
+  public int precedence() {
+    return switch (type) {
+      case Sub, Add -> 1;
+      case Mult, Div -> 2;
+      case Pow, Mod -> 3;
+      case Factorial -> 5;
+      default -> 0;
+    };
+  }
 
-    public Identifier(String val) {
-      this.val = val;
-    }
-
-    public Identifier(CharIterator it) throws FailedToTokenizeException {
-      it.check("\\");
-
-      if (Pattern.matches("[a-zA-Z_]", it.peek().toString())) {
-        val += it.next();
-
-        while (alphanum.matcher(it.peek().toString()).matches())
-          val += it.next();
-      } else throw new FailedToTokenizeException();
-    }
-
-    public boolean equals(Object obj) {
-      if (obj instanceof Token.Identifier id) {
-        return id.val.equals(this.val);
-      } else return false;
-    }
-
-    public int hashCode() {
-      return this.val.hashCode();
-    }
-
-    public String toString() {
-      return val;
-    }
+  public String toString() {
+    return src;
   }
 }

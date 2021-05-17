@@ -16,8 +16,6 @@ public class CharIterator implements Iterator<Character>, Cloneable {
 
   public Character next() {
     if (!hasNext()) return '\0';
-    while (peek() == ' ')
-      ++pos;
     return str.charAt(pos++);
   }
 
@@ -59,6 +57,10 @@ public class CharIterator implements Iterator<Character>, Cloneable {
     else pos = p;
   }
 
+  public int pos() {
+    return pos;
+  }
+  
   public void remove() {
     throw new UnsupportedOperationException();
   }

@@ -1,6 +1,7 @@
 package common;
 
 import tokens.Token;
+import tokens.TokenType;
 import tokens.FailedToParseException;
 import tokens.FailedToTokenizeException;
 
@@ -14,14 +15,19 @@ public class TokenIterator implements Iterator<Token>, Cloneable {
     this.tokenList = tokenList;
   }
 
-  public TokenIterator(String str) throws FailedToTokenizeException {
-    var charIt = new CharIterator(str);
+  public TokenIterator(String str) {
+    var charIt = new CharIterator(str); 
+    var token = Token.tokenize(charIt);
 
-    while (charIt.peek() != '\0') {
-      while (charIt.check(" ") || charIt.check("\t")) { }
+    while (token.type() != TokenType.EOT) {
+      if (token.type() == TokenType.None) {
+        System.out.println("Failed to tokenize at pos " + charIt.pos());
+        break;
+      }
+      if (token.type() != TokenType.Skip)
+        this.tokenList.add(token);
 
-      // this.tokenList.add((Token)(new Token(charIt).children.get(0)));
-      this.tokenList.add(Token.parse(charIt));
+      token = Token.tokenize(charIt);
     }
   }
 
@@ -30,32 +36,38 @@ public class TokenIterator implements Iterator<Token>, Cloneable {
   }
 
   public Token next() {
-    return hasNext() ? tokenList.get(pos++) : new Token.EOT();
+    return hasNext() ? tokenList.get(pos++) : new Token(TokenType.EOT);
   }
 
   public ArrayList<Token> next(int size) {
-    if (pos >= tokenList.size())
-      return new ArrayList<Token>();
-    else if (pos + size >= tokenList.size())
-      return (ArrayList<Token>) tokenList.subList(pos, tokenList.size());
+    var list = new ArrayList<Token>();
+
+    if (pos + size >= tokenList.size()) {
+      pos = tokenList.size();
+      list.addAll(tokenList.subList(pos, tokenList.size()));
+    }
     else {
       pos += size;
-      return (ArrayList<Token>) tokenList.subList(pos - size, pos);
+      list.addAll(tokenList.subList(pos, pos + size));
     }
+    
+    return list;
   }
 
   public Token peek() {
-    return hasNext() ? tokenList.get(pos) : new Token.EOT();
+    return hasNext() ? tokenList.get(pos) : new Token(TokenType.EOT);
   }
 
   public ArrayList<Token> peek(int size) {
-    if (pos >= tokenList.size())
-      return new ArrayList<Token>();
-    else if (pos + size >= tokenList.size())
-      return (ArrayList<Token>) tokenList.subList(pos, tokenList.size());
+    var list = new ArrayList<Token>();
+
+    if (pos + size >= tokenList.size())
+      list.addAll(tokenList.subList(pos, tokenList.size()));
     else {
-      return (ArrayList<Token>) tokenList.subList(pos, pos + size);
+      list.addAll(tokenList.subList(pos, pos + size));
     }
+
+    return list;
   }
   // public boolean check(ArrayList<Token> seq) {
   //   var sublist = peek(seq.size());
@@ -67,6 +79,11 @@ public class TokenIterator implements Iterator<Token>, Cloneable {
 
   //   return true;
   // }
+
+  public Token check(TokenType type) {
+    if (peek().type() == type) return next();
+    else return null;
+  }
 
   public <T extends Token> T check(Class<T> c, String msgIfFailed) throws FailedToParseException {
     if (peek().getClass().getName() != c.getName())
