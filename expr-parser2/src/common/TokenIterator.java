@@ -3,7 +3,6 @@ package common;
 import tokens.Token;
 import tokens.TokenType;
 import tokens.FailedToParseException;
-import tokens.FailedToTokenizeException;
 
 import java.util.*;
 

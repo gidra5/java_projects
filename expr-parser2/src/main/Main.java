@@ -37,6 +37,7 @@ public class Main {
             var parsed = AbstractSyntaxTree.parse(tokenIt);
             if (parsed instanceof AbstractSyntaxTree.DeclNode decl) decls.add(decl);
             else if (parsed instanceof AbstractSyntaxTree.ExprNode expr) System.out.println(expr.toString() + " = " + expr.evaluate(decls));
+            else if (parsed instanceof AbstractSyntaxTree.SimplifyNode expr) System.out.println(expr.simplify().toString());
           }
         }
       }

@@ -16,6 +16,7 @@ public enum TokenType {
   Let, 
   InteractiveMode, 
   Derivative,
+  Simplify,
 
   LBracket, 
   LBrace, 
@@ -29,6 +30,7 @@ public enum TokenType {
   Period, 
   Semicolon, 
   Colon,
+  Placeholder,
 
   Identifier, 
 
